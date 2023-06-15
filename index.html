@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #222222;
+            color: #ffffff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #007bff;
+            font-size: 36px;
+            text-transform: uppercase;
+        }
+
+        .chatbox {
+            background-color: #333333;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .messages {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .user-message {
+            background-color: #007bff;
+            align-self: flex-start;
+            color: #ffffff;
+        }
+
+        .bot-message {
+            background-color: #28a745;
+            align-self: flex-end;
+            color: #ffffff;
+        }
+
+        .user-input {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .user-input input {
+            flex: 1;
+            padding: 8px;
+            border-radius: 3px;
+            border: 1px solid #ced4da;
+            font-size: 16px;
+            outline: none;
+            background-color: #333333;
+            color: #ffffff;
+        }
+
+        .user-input button {
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 3px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        form {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        form button {
+            background-color: #dc3545;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        /* Additional Styling */
+        .chatbox:before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 10px 10px 10px;
+            border-color: transparent transparent #333333 transparent;
+        }
+
+        .message {
+            position: relative;
+        }
+
+        .message:before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 8px 8px 8px;
+            border-color: transparent transparent #007bff transparent;
+            z-index: 1;
+        }
+
+        .typing-indicator {
+            display: none;
+            margin-top: 5px;
+            color: #ffffff;
+            animation: typing 1s infinite;
+        }
+
+        @keyframes typing {
+            0% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.6;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Welcome!</h1>
+    <div class="chatbox">
+        <div class="messages">
+            <!-- Messages will be displayed here -->
+        </div>
+        <div class="user-input">
+            <input type="text" id="user-input" placeholder="Type your message..." autofocus>
+            <button id="send-button">Send</button>
+        </div>
+        <div class="typing-indicator">Typing...</div>
+    </div>
+    <form action="/logout" method="GET">
+        <button type="submit">Logout</button>
+    </form>
+
+    <script>
+        const messagesContainer = document.querySelector('.messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.querySelector('.typing-indicator');
+
+        function sendMessage(message, isUser = false) {
+            const messageClass = isUser ? 'user-message' : 'bot-message';
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${messageClass}`;
+
+            // Check if the message is from the bot or user
+            if (isUser) {
+                messageElement.innerHTML = `<span class="username">(name):</span> ${message}`;
+            } else {
+                messageElement.innerHTML = `<span class="username">bot:</span> ${message}`;
+            }
+
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function processUserInput() {
+            const userInputValue = userInput.value.trim();
+            if (userInputValue !== '') {
+                sendMessage(userInputValue, true);
+                userInput.value = '';
+
+                // Show typing indicator
+                typingIndicator.style.display = 'block';
+
+                // Send user input to the server for processing
+                fetch('/get_response', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user_input: userInputValue
+                        }),
+                    })
+                    .then(response => response.text())
+                    .then(response => {
+                        // Hide typing indicator
+                        typingIndicator.style.display = 'none';
+                        sendMessage(response);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        sendMessage('An error occurred. Please try again later.');
+                    });
+            }
+        }
+
+        userInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                processUserInput();
+            }
+        });
+
+        sendButton.addEventListener('click', processUserInput);
+    </script>
+</body>
+
+</html>
