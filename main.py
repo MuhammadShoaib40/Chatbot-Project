@@ -6,7 +6,7 @@ from glob import glob
 import nltk
 from nltk.corpus import wordnet
 import wikipedia
-from pyDatalog import pyDatalog
+from pyswip import Prolog
 import requests
 from bs4 import BeautifulSoup
 import pickle
@@ -197,9 +197,27 @@ def logout():
     session.pop('name', None)
     return redirect(url_for('login'))
 
+@app.route('/fetch_data', methods=['GET'])
+def fetch_data():
+    if request.method == 'GET':
+        prolog = Prolog()
+        prolog.consult('prologdata.pl')
+
+        # Query the Prolog file for data
+        results = list(prolog.query("my_data(X, Y)"))
+
+        # Process and format the results as per your requirement
+        fetched_data = []
+        for result in results:
+            fetched_data.append(f"{result['X']} - {result['Y']}")
+
+        return "\n".join(fetched_data)
+
+    return 'Invalid request'
+
 @app.route('/get_response', methods=['GET', 'POST'])
 def get_response():
-    fetch_information(data)
+    fetch_data()
     if request.method == 'POST':
         user_input = request.json['user_input']
 
