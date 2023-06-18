@@ -19,7 +19,7 @@ Make sure you have the following installed on your machine:
 - Neo4j
 - pyAIML21
 - NLTK
-- pyDatalog
+- pyswip
 - requests
 - beautifulsoup4
 
